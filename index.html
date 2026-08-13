@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Acervo Técnico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F1E6;
+    --paper-grid:#E3DAC4;
+    --ink:#3E5A72;
+    --ink-soft:#7C93A3;
+    --accent:#CB8A5E;
+    --accent-soft:#F0E2CE;
+    --olive:#94A280;
+    --card:#FCFAF3;
+    --red-thread:#B36E6E;
+  }
+  *{box-sizing:border-box;}
+  html{
+    min-height:100%;
+    background:var(--paper);
+  }
+  body{
+    margin:0;
+    background:transparent;
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:36px 20px 80px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:6px;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Spectral',serif;
+    font-weight:700;
+    font-size:34px;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+  .count b{color:var(--ink);font-size:15px;}
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin:22px 0 16px;
+    flex-wrap:wrap;
+  }
+  .search-box{
+    flex:1;
+    min-width:220px;
+    position:relative;
+  }
+  .search-box input{
+    width:100%;
+    padding:12px 14px 12px 34px;
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  .search-box input:focus{border-color:var(--accent);}
+  .search-box::before{
+    content:"⌕";
+    position:absolute;
+    left:12px;top:50%;
+    transform:translateY(-50%);
+    font-size:16px;
+    color:var(--ink-soft);
+  }
+  .btn-add{
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    letter-spacing:.03em;
+    padding:0 18px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-add:hover{background:var(--accent);border-color:var(--accent);}
+
+  .tipo-tabs{
+    display:flex;
+    gap:0;
+    margin-bottom:16px;
+    border-bottom:1.5px solid var(--ink);
+  }
+  .tipo-tab{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    padding:9px 18px;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    margin-bottom:-1.5px;
+  }
+  .tipo-tab.active{
+    color:var(--ink);
+    border-bottom-color:var(--accent);
+  }
+  .tipo-tab .n{color:var(--ink-soft);font-size:11px;}
+
+  .tipo-toggle{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .tipo-toggle button{
+    flex:1;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:9px;
+    border:1.5px solid var(--ink-soft);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .tipo-toggle button.active{
+    border-color:var(--olive);
+    background:var(--olive);
+    color:#fff;
+  }
+
+  .backup-bar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .sync-status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    padding:0 4px;
+  }
+  .sync-status.on{color:var(--olive);}
+  .sync-status.off{color:var(--red-thread);}
+  .sync-banner{
+    display:none;
+    align-items:center;
+    gap:10px;
+    background:var(--accent-soft);
+    border:1.5px solid var(--accent);
+    padding:9px 14px;
+    margin-bottom:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink);
+  }
+  .sync-banner.show{display:flex;}
+  .sync-banner button{
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    padding:5px 12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .backup-bar-secondary{
+    display:flex;
+    gap:8px;
+    margin-top:6px;
+    margin-bottom:18px;
+  }
+  .btn-ghost{
+    border:1.5px solid var(--ink-soft);
+    background:transparent;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:0 14px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-ghost:hover{border-color:var(--ink);color:var(--ink);}
+
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.03em;
+    padding:5px 11px;
+    border:1px solid var(--ink-soft);
+    color:var(--ink-soft);
+    background:transparent;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .chip.active{
+    background:var(--olive);
+    border-color:var(--olive);
+    color:#fff;
+  }
+
+  /* form */
+  .form-card{
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    padding:20px;
+    margin-bottom:28px;
+    display:none;
+    position:relative;
+  }
+  .form-card.open{display:block;}
+  .form-title{
+    font-family:'Spectral',serif;
+    font-weight:600;
+    font-size:18px;
+    margin:0 0 14px;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .form-grid .full{grid-column:1/-1;}
+  label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:block;
+    margin-bottom:4px;
+  }
+  input[type=text], textarea{
+    width:100%;
+    border:1px solid #C7BC9C;
+    background:#fff;
+    padding:9px 10px;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--accent);}
+  textarea{resize:vertical;min-height:44px;font-family:'Inter',sans-serif;}
+  .form-actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+    justify-content:flex-end;
+  }
+  .btn-secondary{
+    background:transparent;
+    border:1px solid var(--ink-soft);
+    color:var(--ink-soft);
+    padding:9px 16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background:var(--accent);
+    border:1px solid var(--accent);
+    color:#fff;
+    padding:9px 18px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .btn-primary:hover{background:#A6480A;}
+
+  /* cards */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid #C7BC9C;
+    border-left:4px solid var(--olive);
+    padding:16px 16px 14px;
+    position:relative;
+    transition:border-color .15s, transform .1s;
+  }
+  .card:hover{border-left-color:var(--accent);}
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .card h3{
+    font-family:'Spectral',serif;
+    font-weight:600;
+    font-size:16.5px;
+    margin:0;
+    line-height:1.25;
+  }
+  .stamp{
+    flex-shrink:0;
+    border:1px solid var(--accent);
+    color:var(--accent);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:2px 6px;
+    transform:rotate(-2deg);
+    white-space:nowrap;
+  }
+  .card.tipo-link{border-left-color:var(--ink-soft);}
+  .card.tipo-link:hover{border-left-color:var(--accent);}
+  .tipo-icon{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .card .orgao{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+  }
+  .card .notas{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+    line-height:1.4;
+  }
+  .tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-bottom:12px;
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    background:var(--accent-soft);
+    padding:2px 7px;
+  }
+  .card-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-top:1px dashed #C7BC9C;
+    padding-top:10px;
+  }
+  .download-link{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+    text-decoration:none;
+    border-bottom:1.5px solid var(--accent);
+    padding-bottom:1px;
+  }
+  .download-link:hover{color:var(--accent);}
+  .card-actions{display:flex;gap:10px;}
+  .icon-btn{
+    background:none;border:none;cursor:pointer;
+    color:var(--ink-soft);
+    font-size:13px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .icon-btn:hover{color:var(--red-thread);}
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    border:1px dashed #C7BC9C;
+  }
+  .empty b{display:block;font-family:'Spectral',serif;font-size:17px;color:var(--ink);margin-bottom:6px;font-weight:600;}
+
+  .footnote{
+    margin-top:30px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+
+  @media (max-width:520px){
+    .form-grid{grid-template-columns:1fr;}
+    h1{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Referência técnica de campo</p>
+      <h1>Acervo Técnico</h1>
+    </div>
+    <div class="count"><b id="countNum">0</b><br>itens catalogados</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input id="searchInput" type="text" placeholder="Buscar por título, órgão, tag ou assunto...">
+    </div>
+    <button class="btn-add" id="btnOpenForm">+ Novo item</button>
+  </div>
+
+  <div class="sync-banner" id="syncBanner">
+    <span>🔗 Arquivo compartilhado encontrado, mas o navegador precisa que você confirme o acesso de novo.</span>
+    <button id="btnReconnect">Reconectar</button>
+  </div>
+
+  <div class="backup-bar">
+    <span class="sync-status" id="syncStatus">○ não conectado a pasta compartilhada</span>
+    <button class="btn-ghost" id="btnConnect">🔗 conectar arquivo compartilhado</button>
+    <button class="btn-ghost" id="btnCreateShared">＋ criar arquivo compartilhado</button>
+  </div>
+  <div class="backup-bar-secondary">
+    <button class="btn-ghost" id="btnExport">↓ exportar backup</button>
+    <button class="btn-ghost" id="btnImport">↑ importar backup</button>
+    <input type="file" id="fileImport" accept="application/json" style="display:none;">
+  </div>
+
+  <div class="tipo-tabs" id="tipoTabs"></div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="form-card" id="formCard">
+    <p class="form-title" id="formTitle">Nova ficha</p>
+    <div class="tipo-toggle" id="tipoToggle">
+      <button type="button" data-tipo="manual">📄 Manual</button>
+      <button type="button" data-tipo="link">🔗 Link de serviço</button>
+    </div>
+    <div class="form-grid">
+      <div class="full">
+        <label id="lblTitulo">Título do manual / formulário</label>
+        <input type="text" id="fTitulo" placeholder="Ex: Manual Técnico de Georreferenciamento (INCRA)">
+      </div>
+      <div>
+        <label id="lblOrgao">Órgão / site</label>
+        <input type="text" id="fOrgao" placeholder="Ex: INCRA, IDAF, Geobases...">
+      </div>
+      <div>
+        <label>Categoria</label>
+        <input type="text" id="fCategoria" placeholder="Ex: Georreferenciamento, Cartório, ART...">
+      </div>
+      <div class="full">
+        <label id="lblLink">Link de download</label>
+        <input type="text" id="fLink" placeholder="https://...">
+      </div>
+      <div class="full">
+        <label>Tags (separadas por vírgula)</label>
+        <input type="text" id="fTags" placeholder="Ex: retificação, matrícula, sigef">
+      </div>
+      <div class="full">
+        <label>Notas (opcional)</label>
+        <textarea id="fNotas" placeholder="Observações, versão, quando usar..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" id="btnCancel">Cancelar</button>
+      <button class="btn-primary" id="btnSave">Salvar ficha</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <b>Nenhuma ficha ainda</b>
+    Cadastre o primeiro manual com o botão "+ Novo manual" acima.
+  </div>
+
+  <p class="footnote">Dados salvos automaticamente neste navegador · apenas links são armazenados, não os arquivos em si · use "exportar backup" antes de renomear ou mover este arquivo</p>
+</div>
+
+<script>
+let manuais = [];
+let editingId = null;
+let activeCategoria = null;
+let activeTipo = null; // null = todos, 'manual', 'link'
+let formTipo = 'manual';
+let sharedHandle = null;
+let syncTimer = null;
+const SYNC_SUPPORTED = typeof window.showOpenFilePicker === 'function' && window.isSecureContext;
+
+const TIPO_LABEL = {
+  manual: {tab:'Manuais', badge:'📄 Manual', titulo:'Título do manual / formulário', orgao:'Órgão / site', link:'Link de download'},
+  link:   {tab:'Links',   badge:'🔗 Link de serviço', titulo:'Nome do serviço / ferramenta', orgao:'Site / prestador', link:'Link do serviço'}
+};
+
+// ---------- Camada de dados: arquivo compartilhado + cache local ----------
+// Fonte da verdade: um arquivo .json numa pasta compartilhada (Google Drive,
+// OneDrive, pasta de rede etc.), lido/escrito direto pelo navegador via
+// File System Access API — sem precisar exportar/importar manualmente.
+// Isso só funciona em Chrome/Edge e quando a página é aberta via http://
+// (por isso o servidor local). O localStorage continua sendo usado como
+// cache: garante que o app abre com os últimos dados vistos mesmo se a
+// conexão com o arquivo compartilhado cair.
+const STORAGE_KEY = 'acervo-manuais-dados';
+const SYNC_POLL_MS = 4000;
+
+function idbOpen(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open('acervo-sync', 1);
+    req.onupgradeneeded = ()=> req.result.createObjectStore('handles');
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('handles','readwrite');
+    tx.objectStore('handles').put(value, key);
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('handles','readonly');
+    const req = tx.objectStore('handles').get(key);
+    req.onsuccess = ()=> resolve(req.result || null);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+function loadFromLocalCache(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    manuais = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    console.error('Falha ao carregar cache local', e);
+    manuais = [];
+  }
+  render();
+}
+
+function saveLocalCache(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(manuais)); }
+  catch(e){ console.error('Falha ao salvar cache local', e); }
+}
+
+async function readSharedFile(handle){
+  const file = await handle.getFile();
+  const text = await file.text();
+  if(!text.trim()) return [];
+  return JSON.parse(text);
+}
+async function writeSharedFile(handle, data){
+  const writable = await handle.createWritable();
+  await writable.write(JSON.stringify(data, null, 2));
+  await writable.close();
+}
+
+// mescla dois conjuntos de fichas por id, mantendo a versão mais recente
+// (updatedAt) de cada uma — evita que uma pessoa apague o que outra
+// acabou de salvar.
+function mergeById(a, b){
+  const map = new Map();
+  [...a, ...b].forEach(item=>{
+    const existing = map.get(item.id);
+    if(!existing || (item.updatedAt||0) >= (existing.updatedAt||0)){
+      map.set(item.id, item);
+    }
+  });
+  return [...map.values()].sort((x,y)=> (y.addedAt||0) - (x.addedAt||0));
+}
+
+function setSyncStatus(state, msg){
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status ' + (state==='on'?'on':state==='off'?'off':'');
+  el.textContent = msg;
+}
+
+function stopPolling(){
+  if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
+}
+
+function startPolling(){
+  stopPolling();
+  syncTimer = setInterval(async ()=>{
+    if(!sharedHandle) return;
+    if(document.getElementById('formCard').classList.contains('open')) return; // não interrompe quem está digitando
+    try{
+      const perm = await sharedHandle.queryPermission({mode:'readwrite'});
+      if(perm !== 'granted') { stopPolling(); showReconnectBanner(); return; }
+      const remote = await readSharedFile(sharedHandle);
+      const merged = mergeById(remote, manuais);
+      if(JSON.stringify(merged) !== JSON.stringify(manuais)){
+        manuais = merged;
+        saveLocalCache();
+        render();
+      }
+    }catch(e){
+      console.warn('Falha ao sincronizar (poll):', e);
+    }
+  }, SYNC_POLL_MS);
+}
+
+function showReconnectBanner(){
+  document.getElementById('syncBanner').classList.add('show');
+  setSyncStatus('off', '⚠ conexão perdida com o arquivo compartilhado');
+}
+function hideReconnectBanner(){
+  document.getElementById('syncBanner').classList.remove('show');
+}
+
+async function afterConnect(){
+  hideReconnectBanner();
+  try{
+    const remote = await readSharedFile(sharedHandle);
+    manuais = mergeById(remote, manuais);
+    await writeSharedFile(sharedHandle, manuais);
+    saveLocalCache();
+    setSyncStatus('on', '● sincronizado com arquivo compartilhado');
+    startPolling();
+    render();
+  }catch(e){
+    console.error('Falha ao conectar ao arquivo compartilhado', e);
+    setSyncStatus('off', '⚠ erro ao ler o arquivo compartilhado');
+  }
+}
+
+async function initSync(){
+  if(!SYNC_SUPPORTED){
+    loadFromLocalCache();
+    setSyncStatus('off', '○ sincronização automática indisponível neste navegador (use Chrome/Edge via http://)');
+    document.getElementById('btnConnect').disabled = true;
+    document.getElementById('btnCreateShared').disabled = true;
+    return;
+  }
+  loadFromLocalCache(); // mostra algo na tela imediatamente
+  try{
+    const handle = await idbGet('sharedFileHandle');
+    if(!handle){
+      setSyncStatus('off', '○ não conectado a pasta compartilhada');
+      return;
+    }
+    sharedHandle = handle;
+    const perm = await handle.queryPermission({mode:'readwrite'});
+    if(perm === 'granted'){
+      await afterConnect();
+    } else {
+      showReconnectBanner();
+    }
+  }catch(e){
+    console.warn('Sem conexão salva com arquivo compartilhado ainda.', e);
+  }
+}
+
+async function persist(){
+  saveLocalCache();
+  if(sharedHandle){
+    try{
+      const remote = await readSharedFile(sharedHandle);
+      manuais = mergeById(remote, manuais);
+      await writeSharedFile(sharedHandle, manuais);
+      saveLocalCache();
+      setSyncStatus('on', '● sincronizado com arquivo compartilhado');
+    }catch(e){
+      console.warn('Falha ao gravar no arquivo compartilhado, salvo só localmente por enquanto.', e);
+      setSyncStatus('off', '⚠ salvo localmente — falha ao gravar no compartilhado');
+      showReconnectBanner();
+    }
+  }
+}
+
+function uid(){ return 'm' + Date.now() + Math.random().toString(36).slice(2,7); }
+
+function setFormTipo(tipo){
+  formTipo = tipo;
+  document.querySelectorAll('#tipoToggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tipo===tipo);
+  });
+  const l = TIPO_LABEL[tipo];
+  document.getElementById('lblTitulo').textContent = l.titulo;
+  document.getElementById('lblOrgao').textContent = l.orgao;
+  document.getElementById('lblLink').textContent = l.link;
+}
+
+function openForm(item){
+  document.getElementById('formCard').classList.add('open');
+  document.getElementById('formTitle').textContent = item ? 'Editar ficha' : 'Nova ficha';
+  editingId = item ? item.id : null;
+  setFormTipo(item ? (item.tipo||'manual') : (activeTipo==='link' ? 'link' : 'manual'));
+  document.getElementById('fTitulo').value = item ? item.titulo : '';
+  document.getElementById('fOrgao').value = item ? item.orgao : '';
+  document.getElementById('fCategoria').value = item ? item.categoria : '';
+  document.getElementById('fLink').value = item ? item.link : '';
+  document.getElementById('fTags').value = item ? item.tags.join(', ') : '';
+  document.getElementById('fNotas').value = item ? item.notas : '';
+  document.getElementById('fTitulo').focus();
+}
+
+function closeForm(){
+  document.getElementById('formCard').classList.remove('open');
+  editingId = null;
+}
+
+async function saveForm(){
+  const titulo = document.getElementById('fTitulo').value.trim();
+  const link = document.getElementById('fLink').value.trim();
+  if(!titulo || !link){
+    alert('Título e link são obrigatórios.');
+    return;
+  }
+  const data = {
+    tipo: formTipo,
+    titulo,
+    orgao: document.getElementById('fOrgao').value.trim(),
+    categoria: document.getElementById('fCategoria').value.trim() || 'Geral',
+    link,
+    tags: document.getElementById('fTags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    notas: document.getElementById('fNotas').value.trim(),
+  };
+
+  if(editingId){
+    const idx = manuais.findIndex(m=>m.id===editingId);
+    if(idx>-1) manuais[idx] = {...manuais[idx], ...data, updatedAt: Date.now()};
+  } else {
+    manuais.unshift({id: uid(), addedAt: Date.now(), updatedAt: Date.now(), ...data});
+  }
+
+  await persist();
+  closeForm();
+  render();
+}
+
+async function deleteItem(id){
+  if(!confirm('Remover esta ficha do acervo?')) return;
+  const idx = manuais.findIndex(m=>m.id===id);
+  if(idx>-1) manuais[idx] = {...manuais[idx], deleted:true, updatedAt: Date.now()};
+  await persist();
+  render();
+}
+
+function matchesSearch(item, q){
+  if(!q) return true;
+  const hay = [item.titulo, item.orgao, item.categoria, item.notas, ...(item.tags||[])].join(' ').toLowerCase();
+  return q.toLowerCase().split(' ').every(word => hay.includes(word));
+}
+
+function render(){
+  const q = document.getElementById('searchInput').value;
+
+  // abas de tipo (Todos / Manuais / Links)
+  const tabsEl = document.getElementById('tipoTabs');
+  tabsEl.innerHTML = '';
+  const tabDefs = [
+    {key:null, label:'Todos'},
+    {key:'manual', label:TIPO_LABEL.manual.tab},
+    {key:'link', label:TIPO_LABEL.link.tab},
+  ];
+  const vivos = manuais.filter(m=>!m.deleted);
+  tabDefs.forEach(t=>{
+    const btn = document.createElement('button');
+    btn.className = 'tipo-tab' + (activeTipo===t.key ? ' active' : '');
+    const count = t.key===null ? vivos.length : vivos.filter(m=>(m.tipo||'manual')===t.key).length;
+    btn.innerHTML = `${t.label} <span class="n">(${count})</span>`;
+    btn.onclick = ()=>{ activeTipo = t.key; activeCategoria = null; render(); };
+    tabsEl.appendChild(btn);
+  });
+
+  const itemsDoTipo = vivos.filter(m => !activeTipo || (m.tipo||'manual')===activeTipo);
+  const categorias = [...new Set(itemsDoTipo.map(m=>m.categoria))].sort();
+
+  // chips
+  const chipsEl = document.getElementById('chips');
+  chipsEl.innerHTML = '';
+  if(categorias.length){
+    const allChip = document.createElement('button');
+    allChip.className = 'chip' + (activeCategoria===null?' active':'');
+    allChip.textContent = 'Todos';
+    allChip.onclick = ()=>{activeCategoria=null; render();};
+    chipsEl.appendChild(allChip);
+    categorias.forEach(cat=>{
+      const c = document.createElement('button');
+      c.className = 'chip' + (activeCategoria===cat?' active':'');
+      c.textContent = cat;
+      c.onclick = ()=>{activeCategoria = activeCategoria===cat ? null : cat; render();};
+      chipsEl.appendChild(c);
+    });
+  }
+
+  let filtered = itemsDoTipo.filter(m => matchesSearch(m,q) && (!activeCategoria || m.categoria===activeCategoria));
+
+  document.getElementById('countNum').textContent = vivos.length;
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
+  if(!vivos.length){
+    document.getElementById('emptyState').querySelector('b').textContent = 'Nenhuma ficha ainda';
+    document.getElementById('emptyState').lastChild.textContent = 'Cadastre o primeiro manual com o botão "+ Novo manual" acima.';
+  } else if(!filtered.length){
+    document.getElementById('emptyState').querySelector('b').textContent = 'Nada encontrado';
+    document.getElementById('emptyState').lastChild.textContent = 'Tente outro termo ou limpe o filtro de categoria.';
+  }
+
+  filtered.forEach(item=>{
+    const tipo = item.tipo || 'manual';
+    const card = document.createElement('div');
+    card.className = 'card' + (tipo==='link' ? ' tipo-link' : '');
+    card.innerHTML = `
+      <p class="tipo-icon">${TIPO_LABEL[tipo].badge}</p>
+      <div class="card-top">
+        <h3>${escapeHtml(item.titulo)}</h3>
+        <span class="stamp">${escapeHtml(item.categoria)}</span>
+      </div>
+      ${item.orgao ? `<p class="orgao">${escapeHtml(item.orgao)}</p>` : ''}
+      ${item.notas ? `<p class="notas">${escapeHtml(item.notas)}</p>` : ''}
+      ${item.tags && item.tags.length ? `<div class="tags">${item.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      <div class="card-bottom">
+        <a class="download-link" href="${escapeAttr(item.link)}" target="_blank" rel="noopener">${tipo==='link' ? '↗ Acessar' : '↓ Baixar / abrir'}</a>
+        <div class="card-actions">
+          <button class="icon-btn" data-edit="${item.id}">editar</button>
+          <button class="icon-btn" data-del="${item.id}">remover</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const item = manuais.find(m=>m.id===btn.dataset.edit);
+      openForm(item);
+    };
+  });
+  grid.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick = ()=> deleteItem(btn.dataset.del);
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+document.getElementById('btnOpenForm').onclick = ()=> openForm(null);
+document.getElementById('btnCancel').onclick = closeForm;
+document.getElementById('btnSave').onclick = saveForm;
+document.getElementById('searchInput').oninput = render;
+document.querySelectorAll('#tipoToggle button').forEach(b=>{
+  b.onclick = ()=> setFormTipo(b.dataset.tipo);
+});
+
+document.getElementById('btnConnect').onclick = async ()=>{
+  try{
+    const [handle] = await window.showOpenFilePicker({
+      types:[{description:'Arquivo de dados do acervo', accept:{'application/json':['.json']}}],
+      excludeAcceptAllOption:false
+    });
+    sharedHandle = handle;
+    await idbSet('sharedFileHandle', handle);
+    await afterConnect();
+  }catch(err){
+    if(err.name!=='AbortError') alert('Não consegui conectar ao arquivo: '+err.message);
+  }
+};
+
+document.getElementById('btnCreateShared').onclick = async ()=>{
+  try{
+    const handle = await window.showSaveFilePicker({
+      suggestedName:'acervo-dados.json',
+      types:[{description:'Arquivo de dados do acervo', accept:{'application/json':['.json']}}]
+    });
+    sharedHandle = handle;
+    await idbSet('sharedFileHandle', handle);
+    await writeSharedFile(handle, manuais); // já leva o que estiver salvo localmente
+    await afterConnect();
+    alert('Arquivo compartilhado criado! Avise as outras pessoas: elas devem clicar em "conectar arquivo compartilhado" e escolher esse mesmo arquivo na pasta compartilhada.');
+  }catch(err){
+    if(err.name!=='AbortError') alert('Não consegui criar o arquivo: '+err.message);
+  }
+};
+
+document.getElementById('btnReconnect').onclick = async ()=>{
+  if(!sharedHandle){
+    sharedHandle = await idbGet('sharedFileHandle');
+    if(!sharedHandle) return;
+  }
+  try{
+    const perm = await sharedHandle.requestPermission({mode:'readwrite'});
+    if(perm === 'granted'){
+      await afterConnect();
+    } else {
+      alert('Permissão não concedida. Tente novamente e escolha "Permitir".');
+    }
+  }catch(err){
+    alert('Não consegui reconectar: '+err.message);
+  }
+};
+
+// ---------- Backup manual (export/import) ----------
+// localStorage fica preso à URL exata do arquivo (nome + pasta). Se você
+// renomear ou mover este .html, o navegador enxerga como um endereço
+// diferente e os dados salvos "somem" (na verdade continuam guardados,
+// só que vinculados ao arquivo antigo). Por isso: sempre que for renomear,
+// mover ou trocar de computador/navegador, exporte um backup antes e
+// importe depois no arquivo novo.
+document.getElementById('btnExport').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(manuais, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `acervo-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('btnImport').onclick = ()=> document.getElementById('fileImport').click();
+document.getElementById('fileImport').onchange = (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    let incoming;
+    try{
+      incoming = JSON.parse(reader.result);
+      if(!Array.isArray(incoming)) throw new Error('formato inválido');
+    }catch(err){
+      alert('Não consegui ler esse arquivo como backup válido.');
+      e.target.value = '';
+      return;
+    }
+    const substituir = confirm(
+      `Este backup tem ${incoming.length} item(ns).\n\n` +
+      `OK = substituir todos os dados atuais por este backup\n` +
+      `Cancelar = mesclar com o que já está salvo (sem duplicar por ID)`
+    );
+    if(substituir){
+      manuais = incoming;
+    } else {
+      const idsExistentes = new Set(manuais.map(m=>m.id));
+      incoming.forEach(item=>{
+        if(!item.id || !idsExistentes.has(item.id)) manuais.push({...item, id: item.id || uid()});
+      });
+    }
+    await persist();
+    render();
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+};
+
+initSync();
+</script>
+</body>
+</html>
