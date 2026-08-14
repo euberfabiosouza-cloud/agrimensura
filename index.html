@@ -471,6 +471,7 @@
     <p class="form-title" id="formTitle">Nova ficha</p>
     <div class="tipo-toggle" id="tipoToggle">
       <button type="button" data-tipo="manual">📄 Manual</button>
+      <button type="button" data-tipo="tecnico">📘 Técnico-Normativo</button>
       <button type="button" data-tipo="link">🔗 Link de serviço</button>
     </div>
     <div class="form-grid">
@@ -525,8 +526,9 @@ let syncTimer = null;
 const SYNC_SUPPORTED = typeof window.showOpenFilePicker === 'function' && window.isSecureContext;
 
 const TIPO_LABEL = {
-  manual: {tab:'Acervo Técnico-Normativo', badge:'📄 Manual', titulo:'Título do manual / formulário', orgao:'Órgão / site', link:'Link de download'},
-  link:   {tab:'Links',   badge:'🔗 Link de serviço', titulo:'Nome do serviço / ferramenta', orgao:'Site / prestador', link:'Link do serviço'}
+  manual:  {tab:'Manuais', badge:'📄 Manual', titulo:'Título do manual / formulário', orgao:'Órgão / site', link:'Link de download'},
+  tecnico: {tab:'Técnico-Normativo', badge:'📘 Técnico-Normativo', titulo:'Título da norma / instrução técnica', orgao:'Órgão / site', link:'Link de download'},
+  link:    {tab:'Links',   badge:'🔗 Link de serviço', titulo:'Nome do serviço / ferramenta', orgao:'Site / prestador', link:'Link do serviço'}
 };
 
 // ---------- Camada de dados: arquivo compartilhado + cache local ----------
@@ -725,7 +727,7 @@ function openForm(item){
   document.getElementById('formCard').classList.add('open');
   document.getElementById('formTitle').textContent = item ? 'Editar ficha' : 'Nova ficha';
   editingId = item ? item.id : null;
-  setFormTipo(item ? (item.tipo||'manual') : (activeTipo==='link' ? 'link' : 'manual'));
+  setFormTipo(item ? (item.tipo||'manual') : (['link','tecnico'].includes(activeTipo) ? activeTipo : 'manual'));
   document.getElementById('fTitulo').value = item ? item.titulo : '';
   document.getElementById('fOrgao').value = item ? item.orgao : '';
   document.getElementById('fCategoria').value = item ? item.categoria : '';
@@ -793,7 +795,9 @@ function render(){
     {key:null, label:'Todos'},
     {key:'manual', label:TIPO_LABEL.manual.tab},
     {key:'link', label:TIPO_LABEL.link.tab},
+    {key:'tecnico', label:TIPO_LABEL.tecnico.tab},
   ];
+  // Ordem exibida: TODOS, MANUAIS, LINKS, TÉCNICO-NORMATIVO
   const vivos = manuais.filter(m=>!m.deleted);
   tabDefs.forEach(t=>{
     const btn = document.createElement('button');
