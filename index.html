@@ -525,7 +525,7 @@ let syncTimer = null;
 const SYNC_SUPPORTED = typeof window.showOpenFilePicker === 'function' && window.isSecureContext;
 
 const TIPO_LABEL = {
-  manual: {tab:'Manuais', badge:'📄 Manual', titulo:'Título do manual / formulário', orgao:'Órgão / site', link:'Link de download'},
+  manual: {tab:'Acervo Técnico de Agrimensura', badge:'📄 Manual', titulo:'Título do manual / formulário', orgao:'Órgão / site', link:'Link de download'},
   link:   {tab:'Links',   badge:'🔗 Link de serviço', titulo:'Nome do serviço / ferramenta', orgao:'Site / prestador', link:'Link do serviço'}
 };
 
@@ -786,7 +786,7 @@ function matchesSearch(item, q){
 function render(){
   const q = document.getElementById('searchInput').value;
 
-  // abas de tipo (Todos / Manuais / Links)
+  // abas de tipo (Todos / Acervo Técnico de Agrimensura / Links)
   const tabsEl = document.getElementById('tipoTabs');
   tabsEl.innerHTML = '';
   const tabDefs = [
