@@ -150,6 +150,23 @@
     color:var(--ink-soft);
     cursor:pointer;
   }
+  .link-status{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.02em;
+    padding:2px 7px;
+    border-radius:20px;
+    border:1px solid var(--ink-soft);
+    color:var(--ink-soft);
+    cursor:default;
+  }
+  .link-status.ok{ border-color:#3d7a4f; color:#3d7a4f; }
+  .link-status.broken{ border-color:#b03a2e; color:#b03a2e; }
+  .link-status.checking{ opacity:.6; }
+  .btn-ghost.checking{ opacity:.6; pointer-events:none; }
   .tipo-toggle button.active{
     border-color:var(--olive);
     background:var(--olive);
@@ -460,6 +477,7 @@
   <div class="backup-bar-secondary">
     <button class="btn-ghost" id="btnExport">↓ exportar backup</button>
     <button class="btn-ghost" id="btnImport">↑ importar backup</button>
+    <button class="btn-ghost" id="btnCheckLinks">🔍 verificar links</button>
     <input type="file" id="fileImport" accept="application/json" style="display:none;">
   </div>
 
@@ -785,6 +803,78 @@ function matchesSearch(item, q){
   return q.toLowerCase().split(' ').every(word => hay.includes(word));
 }
 
+function fmtCheckedAt(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function linkStatusBadge(item){
+  const st = item.linkStatus;
+  if(!st) return '';
+  if(st==='checking') return `<span class="link-status checking">⏳ verificando...</span>`;
+  if(st==='broken') return `<span class="link-status broken" title="Falhou em ${escapeAttr(fmtCheckedAt(item.linkCheckedAt))}">⚠ possivelmente quebrado</span>`;
+  return `<span class="link-status ok" title="Verificado em ${escapeAttr(fmtCheckedAt(item.linkCheckedAt))}">✓ respondeu · verificado ${escapeAttr(fmtCheckedAt(item.linkCheckedAt))}</span>`;
+}
+
+// Faz uma requisição "no-cors" só para saber se o servidor respondeu.
+// Como o modo no-cors sempre devolve uma resposta "opaca" (sem status
+// legível), NÃO dá pra distinguir 200 de 404/403 por essa via — isso é
+// uma limitação de segurança do navegador (CORS), não um bug. O que essa
+// checagem consegue detectar bem é: domínio fora do ar, DNS que não
+// resolve, servidor recusando conexão, timeout — ou seja, o caso mais
+// comum de "link quebrado" (site saiu do ar / endereço mudou).
+async function pingLink(url, timeoutMs = 9000){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    await fetch(url, {method:'GET', mode:'no-cors', cache:'no-store', signal: controller.signal});
+    return 'ok'; // requisição foi enviada e algo respondeu (não sabemos o status exato)
+  }catch(e){
+    return 'broken'; // erro de rede/DNS/timeout — provável link quebrado
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function checkAllLinks(){
+  const btn = document.getElementById('btnCheckLinks');
+  const vivos = manuais.filter(m=>!m.deleted && m.link);
+  if(!vivos.length) return;
+  btn.classList.add('checking');
+  const originalLabel = btn.textContent;
+
+  const CONCURRENCY = 4;
+  let done = 0;
+  let idx = 0;
+
+  async function worker(){
+    while(idx < vivos.length){
+      const item = vivos[idx++];
+      item.linkStatus = 'checking';
+      render();
+      const result = await pingLink(item.link);
+      item.linkStatus = result;
+      item.linkCheckedAt = Date.now();
+      done++;
+      btn.textContent = `🔍 verificando ${done}/${vivos.length}...`;
+      render();
+    }
+  }
+
+  await Promise.all(Array.from({length: Math.min(CONCURRENCY, vivos.length)}, worker));
+
+  btn.textContent = originalLabel;
+  btn.classList.remove('checking');
+  await persist();
+  render();
+
+  const quebrados = vivos.filter(m=>m.linkStatus==='broken').length;
+  alert(quebrados
+    ? `Verificação concluída: ${quebrados} link(s) não responderam e podem estar quebrados.`
+    : `Verificação concluída: todos os links responderam.`);
+}
+
 function render(){
   const q = document.getElementById('searchInput').value;
 
@@ -857,6 +947,7 @@ function render(){
       ${item.orgao ? `<p class="orgao">${escapeHtml(item.orgao)}</p>` : ''}
       ${item.notas ? `<p class="notas">${escapeHtml(item.notas)}</p>` : ''}
       ${item.tags && item.tags.length ? `<div class="tags">${item.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      ${linkStatusBadge(item)}
       <div class="card-bottom">
         <a class="download-link" href="${escapeAttr(item.link)}" target="_blank" rel="noopener">${tipo==='link' ? '↗ Acessar' : '↓ Baixar / abrir'}</a>
         <div class="card-actions">
@@ -884,6 +975,7 @@ function escapeHtml(s){
 }
 function escapeAttr(s){ return escapeHtml(s); }
 
+document.getElementById('btnCheckLinks').onclick = checkAllLinks;
 document.getElementById('btnOpenForm').onclick = ()=> openForm(null);
 document.getElementById('btnCancel').onclick = closeForm;
 document.getElementById('btnSave').onclick = saveForm;
