@@ -132,6 +132,15 @@
     border-bottom-color:var(--accent);
   }
   .tipo-tab .n{color:var(--ink-soft);font-size:11px;}
+  .tipo-tab.broken{color:var(--red-thread);}
+  .tipo-tab.broken.active{border-bottom-color:var(--red-thread);}
+  .tipo-tab.broken .n{color:var(--red-thread);}
+
+  .link-check-status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
 
   .tipo-toggle{
     display:flex;
@@ -472,12 +481,11 @@
   <div class="backup-bar">
     <span class="sync-status" id="syncStatus">○ não conectado a pasta compartilhada</span>
     <button class="btn-ghost" id="btnConnect">🔗 conectar arquivo compartilhado</button>
-    <button class="btn-ghost" id="btnCreateShared">＋ criar arquivo compartilhado</button>
   </div>
   <div class="backup-bar-secondary">
     <button class="btn-ghost" id="btnExport">↓ exportar backup</button>
     <button class="btn-ghost" id="btnImport">↑ importar backup</button>
-    <button class="btn-ghost" id="btnCheckLinks">🔍 verificar links</button>
+    <span class="link-check-status" id="linkCheckStatus"></span>
     <input type="file" id="fileImport" accept="application/json" style="display:none;">
   </div>
 
@@ -689,7 +697,7 @@ async function initSync(){
     loadFromLocalCache();
     setSyncStatus('off', '○ sincronização automática indisponível neste navegador (use Chrome/Edge via http://)');
     document.getElementById('btnConnect').disabled = true;
-    document.getElementById('btnCreateShared').disabled = true;
+    checkAllLinks();
     return;
   }
   loadFromLocalCache(); // mostra algo na tela imediatamente
@@ -697,6 +705,7 @@ async function initSync(){
     const handle = await idbGet('sharedFileHandle');
     if(!handle){
       setSyncStatus('off', '○ não conectado a pasta compartilhada');
+      checkAllLinks();
       return;
     }
     sharedHandle = handle;
@@ -709,6 +718,7 @@ async function initSync(){
   }catch(e){
     console.warn('Sem conexão salva com arquivo compartilhado ainda.', e);
   }
+  checkAllLinks(); // verificação automática de links a cada abertura do site
 }
 
 async function persist(){
@@ -837,12 +847,18 @@ async function pingLink(url, timeoutMs = 9000){
   }
 }
 
+let linkCheckRunning = false;
+
+// Roda em segundo plano toda vez que o site abre (ver initSync). Não usa
+// alert nem depende de nenhum botão — só atualiza o indicador de texto e
+// os badges nas fichas. Os links marcados como quebrados aparecem
+// automaticamente na aba "⚠ Quebrados" para revisão manual.
 async function checkAllLinks(){
-  const btn = document.getElementById('btnCheckLinks');
+  if(linkCheckRunning) return;
   const vivos = manuais.filter(m=>!m.deleted && m.link);
   if(!vivos.length) return;
-  btn.classList.add('checking');
-  const originalLabel = btn.textContent;
+  linkCheckRunning = true;
+  const statusEl = document.getElementById('linkCheckStatus');
 
   const CONCURRENCY = 4;
   let done = 0;
@@ -857,22 +873,23 @@ async function checkAllLinks(){
       item.linkStatus = result;
       item.linkCheckedAt = Date.now();
       done++;
-      btn.textContent = `🔍 verificando ${done}/${vivos.length}...`;
+      if(statusEl) statusEl.textContent = `🔍 verificando links ${done}/${vivos.length}...`;
       render();
     }
   }
 
   await Promise.all(Array.from({length: Math.min(CONCURRENCY, vivos.length)}, worker));
 
-  btn.textContent = originalLabel;
-  btn.classList.remove('checking');
+  linkCheckRunning = false;
   await persist();
   render();
 
   const quebrados = vivos.filter(m=>m.linkStatus==='broken').length;
-  alert(quebrados
-    ? `Verificação concluída: ${quebrados} link(s) não responderam e podem estar quebrados.`
-    : `Verificação concluída: todos os links responderam.`);
+  if(statusEl){
+    statusEl.textContent = quebrados
+      ? `⚠ ${quebrados} link(s) quebrado(s) · veja a aba "Quebrados"`
+      : `✓ todos os links responderam · verificado ${fmtCheckedAt(Date.now())}`;
+  }
 }
 
 function render(){
@@ -889,6 +906,8 @@ function render(){
   ];
   // Ordem exibida: TODOS, MANUAIS, LINKS, TÉCNICO-NORMATIVO
   const vivos = manuais.filter(m=>!m.deleted);
+  const quebradosCount = vivos.filter(m=>m.linkStatus==='broken').length;
+  if(activeTipo==='broken' && quebradosCount===0) activeTipo = null; // aba some quando não há mais quebrados
   tabDefs.forEach(t=>{
     const btn = document.createElement('button');
     btn.className = 'tipo-tab' + (activeTipo===t.key ? ' active' : '');
@@ -897,8 +916,20 @@ function render(){
     btn.onclick = ()=>{ activeTipo = t.key; activeCategoria = null; render(); };
     tabsEl.appendChild(btn);
   });
+  // aba extra: só aparece quando existe pelo menos 1 link quebrado.
+  // Filtra por status (linkStatus), não por tipo — mostra o item de
+  // qualquer aba (manual/técnico/link) que não respondeu na verificação.
+  if(quebradosCount > 0){
+    const btn = document.createElement('button');
+    btn.className = 'tipo-tab broken' + (activeTipo==='broken' ? ' active' : '');
+    btn.innerHTML = `⚠ Quebrados <span class="n">(${quebradosCount})</span>`;
+    btn.onclick = ()=>{ activeTipo = 'broken'; activeCategoria = null; render(); };
+    tabsEl.appendChild(btn);
+  }
 
-  const itemsDoTipo = vivos.filter(m => !activeTipo || (m.tipo||'manual')===activeTipo);
+  const itemsDoTipo = activeTipo === 'broken'
+    ? vivos.filter(m => m.linkStatus === 'broken')
+    : vivos.filter(m => !activeTipo || (m.tipo||'manual')===activeTipo);
   const categorias = [...new Set(itemsDoTipo.map(m=>m.categoria))].sort();
 
   // chips
@@ -975,7 +1006,6 @@ function escapeHtml(s){
 }
 function escapeAttr(s){ return escapeHtml(s); }
 
-document.getElementById('btnCheckLinks').onclick = checkAllLinks;
 document.getElementById('btnOpenForm').onclick = ()=> openForm(null);
 document.getElementById('btnCancel').onclick = closeForm;
 document.getElementById('btnSave').onclick = saveForm;
@@ -995,22 +1025,6 @@ document.getElementById('btnConnect').onclick = async ()=>{
     await afterConnect();
   }catch(err){
     if(err.name!=='AbortError') alert('Não consegui conectar ao arquivo: '+err.message);
-  }
-};
-
-document.getElementById('btnCreateShared').onclick = async ()=>{
-  try{
-    const handle = await window.showSaveFilePicker({
-      suggestedName:'acervo-dados.json',
-      types:[{description:'Arquivo de dados do acervo', accept:{'application/json':['.json']}}]
-    });
-    sharedHandle = handle;
-    await idbSet('sharedFileHandle', handle);
-    await writeSharedFile(handle, manuais); // já leva o que estiver salvo localmente
-    await afterConnect();
-    alert('Arquivo compartilhado criado! Avise as outras pessoas: elas devem clicar em "conectar arquivo compartilhado" e escolher esse mesmo arquivo na pasta compartilhada.');
-  }catch(err){
-    if(err.name!=='AbortError') alert('Não consegui criar o arquivo: '+err.message);
   }
 };
 
